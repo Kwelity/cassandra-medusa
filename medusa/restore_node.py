@@ -155,7 +155,7 @@ def restore_node_sstableloader(config, temp_dir, backup_name, in_place, keep_aut
     return node_backup
 
 
-def invoke_sstableloader(config, download_dir, keep_auth, fqtns_to_restore, storage_port):
+def invoke_sstableloader(config, download_dir, keep_auth, fqtns_to_restore, storage_port, fqdn):
     cassandra_is_ccm = int(shlex.split(config.cassandra.is_ccm)[0])
     keyspaces = os.listdir(str(download_dir))
     for keyspace in keyspaces:
