@@ -19,7 +19,6 @@ monkey.patch_all()
 import datetime
 import logging
 import logging.handlers
-import socket
 import click
 import sys
 
@@ -96,7 +95,7 @@ def configure_console_logging(verbosity, without_log_timestamp):
 @click.option('--bucket-name', help='Bucket name')
 @click.option('--key-file', help='GCP credentials key file')
 @click.option('--prefix', help='Prefix for shared storage')
-@click.option('--fqdn', help='Act as another host', default=socket.getfqdn())
+@click.option('--fqdn', help='Act as another host')
 @click.option('--ssh-username')
 @click.option('--ssh-key-file')
 @click.pass_context
@@ -217,7 +216,7 @@ def restore_node(medusaconfig, temp_dir, backup_name, in_place, keep_auth, seeds
 @pass_MedusaConfig
 def status(medusaconfig, backup_name):
     """
-    Show status of backups
+    Show status of backups.
     """
     medusa.status.status(medusaconfig, backup_name)
 
@@ -247,10 +246,13 @@ def report_last_backup(medusa_config, push_metrics):
 @pass_MedusaConfig
 def get_last_complete_cluster_backup(medusa_config):
     """
-    Pints the name of the latest complete cluster backup
+    Print the name of the latest complete cluster backup
     """
     backup = medusa.report_latest.get_latest_complete_cluster_backup(medusa_config)
-    print(backup.name)
+    if backup is not None:
+        print(backup.name)
+    else:
+        print("Could not find any full backup for the cluster")
 
 
 @cli.command(name='build-index')
@@ -258,7 +260,7 @@ def get_last_complete_cluster_backup(medusa_config):
 @pass_MedusaConfig
 def build_index(medusa_config, noop):
     """
-    Builds indices for all present backups and prints them in logs. Might upload to buckets if asked to.
+    Build indices for all present backups and prints them in logs. Might upload to buckets if asked to
     """
     medusa.index.build_indices(medusa_config, noop)
 
@@ -272,3 +274,16 @@ def purge(medusaconfig):
     medusa.purge.main(medusaconfig,
                       max_backup_age=int(medusaconfig.storage.max_backup_age),
                       max_backup_count=int(medusaconfig.storage.max_backup_count))
+
+
+@cli.command(name='delete-backup')
+@click.option('--backup-name', help='Backup name', required=True)
+@click.option('-a/-c', '--all-nodes/--current-node',
+              help='Delete backups on all nodes (Default is current node only)',
+              default=False, is_flag=True)
+@pass_MedusaConfig
+def delete_backup(medusaconfig, backup_name, all_nodes):
+    """
+    Delete the given backup on the current node (or on all nodes)
+    """
+    medusa.purge.delete_backup(medusaconfig, backup_name, all_nodes)

@@ -18,7 +18,7 @@ Feature: Integration tests
     We'll spin up a Cassandra cluster
 
     @1
-    Scenario Outline: Perform a backup, verify it, and restore it
+    Scenario Outline: Perform a backup, verify it and restore it.
         Given I have a fresh ccm cluster running named "scenario1"
         Given I am using "<storage>" as storage provider
         When I create the "test" table in keyspace "medusa"
@@ -28,6 +28,8 @@ Feature: Integration tests
         When I run a "ccm node1 nodetool flush" command
         When I perform a backup in "full" mode of the node named "first_backup"
         Then I can see the backup named "first_backup" when I list the backups
+        Then I can download the backup named "first_backup" for all tables
+        Then I can download the backup named "first_backup" for "medusa.test"
         Then I can see the backup status for "first_backup" when I run the status command
         Then backup named "first_backup" has 16 files in the manifest for the "test" table in keyspace "medusa"
         Then the backup index exists
@@ -38,7 +40,6 @@ Feature: Integration tests
         Then I have 300 rows in the "medusa.test" table
         When I restore the backup named "first_backup"
         Then I have 200 rows in the "medusa.test" table
-        
         @local
         Examples: Local storage
         | storage           |
@@ -223,7 +224,7 @@ Feature: Integration tests
 # other storage providers than local won't work with this test
 
     @8
-    Scenario Outline: Perform an differential backup, verify it, and restore it
+    Scenario Outline: Perform an differential backup, verify it, restore it and delete it
         Given I have a fresh ccm cluster running named "scenario8"
         Given I am using "<storage>" as storage provider
         When I create the "test" table in keyspace "medusa"
@@ -264,6 +265,10 @@ Feature: Integration tests
         Then I can see the backup named "second_backup" when I list the backups
         Then I can see the backup named "third_backup" when I list the backups
         Then verify fails on the backup named "third_backup"
+        When I delete the backup named "first_backup"
+        Then I cannot see the backup named "first_backup" when I list the backups
+        Then I can see the backup named "second_backup" when I list the backups
+        Then I can see the backup named "third_backup" when I list the backups
 
         @local
         Examples: Local storage
